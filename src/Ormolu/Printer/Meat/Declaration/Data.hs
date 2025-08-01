@@ -94,7 +94,7 @@ p_dataDecl style name tyVars getTyVarLoc p_tyVar fixity HsDataDefn {..} = do
       gadt = isJust dd_kindSig || any (isGadt . unLoc) dd_cons'
   case dd_cons' of
     [] -> pure ()
-    first_dd_cons : _ ->
+    _ : _ ->
       if gadt
         then inci $ do
           switchLayout declHeaderSpans $ do
@@ -107,25 +107,17 @@ p_dataDecl style name tyVars getTyVarLoc p_tyVar fixity HsDataDefn {..} = do
                 case dd_cons' of
                   [L _ ConDeclH98 {con_args = RecCon {}}] -> Is #singleRecCon
                   _ -> Isn't #singleRecCon
-              compactLayoutAroundEquals =
-                onTheSameLine
-                  (getLocA name)
-                  (combineSrcSpans' (conDeclConsSpans (unLoc first_dd_cons)))
-              conDeclConsSpans = \case
-                ConDeclGADT {..} -> getLocA <$> con_names
-                ConDeclH98 {..} -> getLocA con_name :| []
           if hasHaddocks dd_cons'
             then newline
-            else
-              if Choice.isTrue singleRecCon && compactLayoutAroundEquals
-                then space
-                else breakpoint
+            else space
           equals
-          space
+          if Choice.isTrue singleRecCon
+            then space
+            else breakpoint
           layout <- getLayout
           let s =
                 if layout == MultiLine || hasHaddocks dd_cons'
-                  then newline >> txt "|" >> space
+                  then space >> txt "|" >> newline
                   else space >> txt "|" >> space
               sitcc' =
                 if hasHaddocks dd_cons' || Choice.isFalse singleRecCon
@@ -136,7 +128,7 @@ p_dataDecl style name tyVars getTyVarLoc p_tyVar fixity HsDataDefn {..} = do
 
   sortDerivingClauses <- getPrinterOpt poSortDerivingClauses
   let sortedDeriving = if sortDerivingClauses then sortOn (derivingStrategyKey . fmap unLoc . deriv_clause_strategy . unLoc) dd_derivs else dd_derivs
-  inci $ sep newline (located' p_hsDerivingClause) sortedDeriving
+  inciBy 2 $ sep newline (located' p_hsDerivingClause) sortedDeriving
   where
     derivingStrategyKey Nothing = ClauseNoStrategy
     derivingStrategyKey (Just strategy) = case strategy of
@@ -211,8 +203,10 @@ p_conDecl singleRecCon ConDeclH98 {..} =
       renderContext
       switchLayout conDeclSpn $ do
         p_rdrName con_name
-        breakpoint
-        inciIf (Choice.isFalse singleRecCon) (located l p_conDeclFields)
+        space
+        if Choice.isTrue singleRecCon
+          then inciByFrac (-1) $ located l p_conDeclFields
+          else located l p_conDeclFields
     InfixCon (HsScaled _ l) (HsScaled _ r) -> do
       -- manually render these
       let (lType, larg_doc) = splitDocTy l

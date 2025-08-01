@@ -294,23 +294,23 @@ backticks m = do
 
 -- | Surround given entity by banana brackets (i.e., from arrow notation.)
 banana :: BracketStyle -> R () -> R ()
-banana = brackets_ True token'oparenbar token'cparenbar
+banana = (sitcc .) . brackets_ True token'oparenbar token'cparenbar
 
 -- | Surround given entity by curly braces @{@ and  @}@.
 braces :: BracketStyle -> R () -> R ()
-braces = brackets_ False (txt "{") (txt "}")
+braces = brackets_ True (txt "{") (txt "}")
 
 -- | Surround given entity by square brackets @[@ and @]@.
 brackets :: BracketStyle -> R () -> R ()
-brackets = brackets_ False (txt "[") (txt "]")
+brackets = (sitcc .) . brackets_ False (txt "[") (txt "]")
 
 -- | Surround given entity by parentheses @(@ and @)@.
 parens :: BracketStyle -> R () -> R ()
-parens = brackets_ False (txt "(") (txt ")")
+parens = (sitcc .) . brackets_ False (txt "(") (txt ")")
 
 -- | Surround given entity by @(# @ and @ #)@.
 parensHash :: BracketStyle -> R () -> R ()
-parensHash = brackets_ True (txt "(#") (txt "#)")
+parensHash = (sitcc .) . brackets_ True (txt "(#") (txt "#)")
 
 -- | Braces as used for pragmas: @{\-#@ and @#-\}@.
 pragmaBraces :: R () -> R ()
@@ -346,7 +346,7 @@ brackets_ ::
   -- | Inner expression
   R () ->
   R ()
-brackets_ needBreaks open close style m = sitcc (vlayout singleLine multiLine)
+brackets_ needBreaks open close style m = vlayout singleLine multiLine
   where
     singleLine = do
       open
