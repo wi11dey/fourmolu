@@ -768,23 +768,23 @@ p_hsExpr' isApp s = \case
       sep commaDel (sitcc . located' p_hsExprListItem) xs
   RecordCon {..} -> do
     p_rdrName rcon_con
-    breakpointPreRecordBrace
+    space
     let HsRecFields {..} = rcon_flds
         p_lhs = located' $ p_rdrName . foLabel
         fields = located' (p_hsFieldBind p_lhs) <$> rec_flds
         dotdot = case rec_dotdot of
           Just {} -> [txt ".."]
           Nothing -> []
-    inci . braces N $
+    braces S $
       sep commaDel sitcc (fields <> dotdot)
   RecordUpd {..} -> do
     located rupd_expr p_hsExpr
-    breakpointPreRecordBrace
+    space
     let p_recFields p_lbl =
           sep commaDel (sitcc . located' (p_hsFieldBind p_lbl))
         p_fieldLabelStrings (FieldLabelStrings flss) =
           p_dotFieldOccs $ unLoc <$> flss
-    inci . braces N $ case rupd_flds of
+    braces S $ case rupd_flds of
       RegularRecUpdFields {..} ->
         p_recFields (located' p_fieldOcc) recUpdFields
       OverloadedRecUpdFields {..} ->
